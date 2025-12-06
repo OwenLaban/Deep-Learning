@@ -1,265 +1,213 @@
-# UTS – End-to-End Machine Learning & Deep Learning Pipelines
+# Machine Learning & Deep Learning UTS – Owen
 
-This repository contains three end-to-end projects for the Machine Learning & Deep Learning midterm:
-
-1. **Customer Clustering** – Unsupervised learning (ML + Autoencoder).  
-2. **Fraud Detection** – Binary classification (ML + Deep Learning).  
-3. **Regression** – Predicting a continuous target (ML + Deep Learning).
-
-All notebooks are designed to be runnable in **Google Colab** with minimal setup.
+![Python](https://img.shields.io/badge/Python-3.10%2B-blue?style=for-the-badge&logo=python&logoColor=white)
+![Jupyter Notebook](https://img.shields.io/badge/Tools-Google_Colab-orange?style=for-the-badge&logo=googlecolab&logoColor=white)
+![Scikit-Learn](https://img.shields.io/badge/Library-Scikit_Learn-yellow?style=for-the-badge&logo=scikit-learn&logoColor=white)
+![TensorFlow](https://img.shields.io/badge/Deep_Learning-TensorFlow-ff6f00?style=for-the-badge&logo=tensorflow&logoColor=white)
 
 ---
 
-## 1. Customer Clustering (Unsupervised Learning)
+## 👤 Student Identification
 
-**Notebook:** `Customer_Clustering_ML.ipynb`  
-**Task:** Segment customers based on their credit card usage patterns.
+> This repository is submitted as part of the **Machine Learning & Deep Learning** coursework / UTS.
 
-### Dataset
-
-- **Source:** Google Drive (credit card customer dataset).  
-- **File:** `clusteringmidterm.csv`  
-- Each row represents one customer; columns describe behaviors such as:
-  `BALANCE`, `PURCHASES`, `CASH_ADVANCE`, `PAYMENTS`,
-  `PURCHASES_FREQUENCY`, `CASH_ADVANCE_FREQUENCY`,
-  `PRC_FULL_PAYMENT`, `TENURE`, etc.
-
-### Pipeline Overview
-
-1. **Data Loading & Cleaning**
-   - Load dataset from Google Drive.
-   - Handle missing values (imputation / dropping if needed).
-   - Remove non-informative columns and check data types.
-
-2. **Preprocessing**
-   - Separate numeric and categorical features (if any).
-   - Apply **StandardScaler** to numeric features.
-   - Prepare `df_scaled` for traditional ML models.
-
-3. **Optimal Number of Clusters**
-   - **Elbow Method** using Within-Cluster Sum of Squares (inertia).
-   - **Silhouette Score** analysis for different `k`.
-   - Select a reasonable `k` (e.g., `k = 4`) for comparison.
-
-4. **Clustering Algorithms (ML)**
-   - **K-Means** on `df_scaled` (baseline clustering).
-   - Evaluation:
-     - Silhouette Score
-     - Davies–Bouldin Index
-     - Calinski–Harabasz Score
-   - Cluster size distribution.
-
-5. **Deep Learning: Autoencoder + K-Means**
-   - Build a **symmetric autoencoder** with:
-     - Encoder → latent dimension `z` (e.g. 8).
-     - Decoder → reconstruct original features.
-   - Train with **MSE loss** and **Adam optimizer**.
-   - Use **EarlyStopping** on `val_loss`.
-   - Extract latent features (`latent_df`) from the bottleneck layer.
-   - Run **K-Means** on `latent_df` and evaluate using Silhouette Score.
-
-6. **Cluster Profiling & Business Interpretation**
-   - For both:
-     - **K-Means (df_scaled)**
-     - **AE + K-Means (latent_df)**
-   - Create summary tables (mean of key features per cluster).
-   - Interpret segments, for example:
-     - Active Purchasers (healthy usage)
-     - Cash-Advance–heavy, higher risk
-     - Heavy cash-advance but disciplined payer
-     - Mixed users with high balances
-   - Compare cluster quality:
-     - Example result: K-Means Silhouette ≈ 0.92 vs AE+KMeans ≈ 0.79.
-
-7. **Key Takeaways**
-   - For this dataset, **K-Means + StandardScaler** gives the best cluster separation.
-   - **Autoencoder** is useful for representation learning, but does not always outperform simple ML for clustering on moderate-sized tabular data.
-   - Clusters can be used for targeted marketing and risk management strategies.
+- **Name:** Josua Owen Fernandi Silaban  
+- **NIM:** 1103223117  
+- **Class:** TK-46-04  
 
 ---
 
-## 2. Fraud Detection (Binary Classification)
+## 🎯 Repository Purpose
 
-**Notebook:** `E2E_Fraud_Detection_ML.ipynb`  
-**Task:** Predict whether an online transaction is fraudulent (`isFraud`).
+This repository documents three **end-to-end ML & DL pipelines** yang dikerjakan sebagai contoh UTS:
 
-### Dataset
+1. **Customer Clustering** – Unsupervised learning (K-Means + Autoencoder).  
+2. **Fraud Detection** – Binary classification (ML baselines + ANN classifier).  
+3. **Regression** – Predicting a continuous target (ML baselines + ANN regressor).
 
-- **Source:** Google Drive (fraud transaction dataset).  
-- **Files:**
-  - `train_transaction.csv` – labeled training set with `isFraud`.
-  - `test_transaction.csv` – unlabeled test set for submission.
-- Each row is a single transaction with many features:
-  amount, time, product code, card information, address, device info, etc.
+Setiap notebook menunjukkan alur lengkap:
 
-### Pipeline Overview
-
-1. **Data Loading & Merging**
-   - Load `train_transaction.csv` (and optional identity table if provided).
-   - Split into:
-     - Features `X`
-     - Target `y = isFraud`.
-
-2. **Preprocessing**
-   - Identify **numeric** and **categorical** features.
-   - Use `ColumnTransformer`:
-     - `StandardScaler` for numeric columns.
-     - `OneHotEncoder` for categorical columns (`handle_unknown="ignore"`).
-   - Split into **train / validation** sets.
-
-3. **Machine Learning Baselines**
-   - Models typically used:
-     - **Logistic Regression**
-     - **Random Forest** (or other tree-based model).
-   - Evaluation on validation set:
-     - **ROC–AUC** (main metric)
-     - Precision, Recall, F1-score
-     - Confusion matrix (focus on fraud recall).
-
-4. **Class Imbalance Handling**
-   - Fraud cases are rare → class imbalance.
-   - Strategies:
-     - `class_weight="balanced"` for some models.
-     - Evaluation emphasizes **Recall of fraud class** and **AUC**.
-
-5. **Deep Learning Model (ANN)**
-   - Reuse the same `preprocessor` to create:
-     - `X_train_dl`, `X_val_dl`, `X_test_dl` (float32).
-   - Compute **class weights** from `y_train`.
-   - Build an **ANN classifier**:
-     - Dense(128, ReLU) → Dropout(0.3)
-     - Dense(64, ReLU) → Dropout(0.3)
-     - Dense(1, Sigmoid) – output probability of fraud.
-   - Compile:
-     - Loss: `binary_crossentropy`
-     - Optimizer: `Adam`
-     - Metrics: `AUC`, `Precision`, `Recall`.
-   - Use **EarlyStopping** on `val_auc` with `restore_best_weights=True`.
-
-6. **Evaluation & Comparison**
-   - For the ANN:
-     - Compute validation **AUC**, precision, recall.
-     - Show classification report & confusion matrix.
-   - Compare:
-     - Logistic Regression AUC vs Random Forest AUC vs ANN AUC.
-   - Analyze trade-offs between:
-     - Catching more fraud (higher recall) vs false alarms.
-
-7. **Submission**
-   - Generate fraud probabilities for `test_transaction.csv`.
-   - Create submission file:
-     - `TransactionID`, `isFraud` (probabilities from best model).
-
-8. **Key Takeaways**
-   - With a consistent preprocessing pipeline, both **Scikit-Learn models** and **Keras ANN** can be compared fairly using ROC–AUC.
-   - On this dataset, the chosen final model balances:
-     - High AUC
-     - Sufficient recall for fraud class
-     - Acceptable false positive rate.
+> **Load data → Preprocessing → Modeling (ML & DL) → Evaluation → Interpretation.**
 
 ---
 
-## 3. Regression – Song Release Year Prediction
+## 📂 Project Structure (Main Notebooks)
 
-**Notebook:** `E2E_Regression_Pipeline.ipynb`  
-**Task:** Predict a continuous target, e.g., **song release year**, from audio features.
+- `Customer_Clustering_ML.ipynb`  
+  Unsupervised learning + Deep Learning (Autoencoder) untuk segmentasi nasabah kartu kredit.
 
-### Dataset
+- `E2E_Fraud_Detection_ML.ipynb`  
+  End-to-end fraud detection (klasifikasi) dengan model ML dan ANN.
 
-- **Source:** Google Drive.  
-- **File:** `midterm-regresi-dataset.csv`  
-- Characteristics:
-  - No header row.
-  - **First column**: target label (e.g., release year).  
-  - Remaining columns: numeric features derived from the audio signal.
-
-### Pipeline Overview
-
-1. **Data Loading**
-   - Download dataset from Google Drive using `gdown`.
-   - Load with `pandas.read_csv(header=None)`.
-   - Split into:
-     - `y` = first column (target).
-     - `X` = remaining columns (features).
-
-2. **Train–Validation Split**
-   - Use `train_test_split` (e.g., 80% train, 20% validation).
-   - Random seed fixed (e.g., 42) for reproducibility.
-
-3. **Preprocessing**
-   - Apply **StandardScaler** to all numeric features.
-   - Obtain:
-     - `X_train_scaled`
-     - `X_val_scaled`.
-
-4. **Machine Learning Models**
-   - **Baseline model** (e.g., predict mean year) as a naive reference.
-   - **Linear Regression** as a simple parametric model.
-   - Optionally:
-     - Random Forest Regressor / Gradient Boosting for non-linear patterns.
-   - Evaluation metrics:
-     - **MSE** (Mean Squared Error)
-     - **RMSE** (Root Mean Squared Error)
-     - **MAE** (Mean Absolute Error)
-     - **R²** (Coefficient of Determination)
-
-5. **Deep Learning Regression (ANN)**
-   - Use the scaled features as input to a neural network:
-     - Dense(128, ReLU) → Dropout(0.3)
-     - Dense(64, ReLU) → Dropout(0.3)
-     - Dense(1, Linear) – predicts a single continuous value (year).
-   - Compile:
-     - Loss: `mse`
-     - Optimizer: `Adam`
-     - Metrics: `mae`, `mse`.
-   - Train with **EarlyStopping** on `val_loss` and appropriate `batch_size`.
-   - Plot training vs validation loss curves.
-
-6. **Evaluation & Comparison**
-   - Compute MSE, RMSE, MAE, R² on the validation set for:
-     - Linear Regression
-     - Tree-based model (if used)
-     - ANN regression
-   - Compare performance:
-     - Lower MSE/RMSE/MAE → better.
-     - Higher R² → better fit.
-   - Decide whether deep learning provides meaningful improvement over classical ML for this dataset.
-
-7. **Key Takeaways**
-   - Demonstrates an **end-to-end regression pipeline** with:
-     - Data loading
-     - Preprocessing
-     - ML baselines
-     - Deep learning model
-     - Unified evaluation.
-   - Shows that, depending on dataset size & complexity, classical models may compete closely with or sometimes outperform deep learning, especially on tabular data.
+- `E2E_Regression_Pipeline.ipynb`  
+  End-to-end regression pipeline untuk memprediksi nilai kontinu (tahun rilis lagu).
 
 ---
 
-## How to Run the Notebooks
+## 1️⃣ Customer Clustering – K-Means & Autoencoder
 
-1. Open **Google Colab**.
-2. Upload the `.ipynb` notebook and run cells from top to bottom.  
-3. Make sure:
-   - Google Drive is mounted if datasets are stored there.  
-   - `gdown` is installed when using Drive file IDs.  
-4. Adjust paths or `file_id` variables if your dataset locations are different.
+**File:** `Customer_Clustering_ML.ipynb`  
+**Task:** Mengelompokkan nasabah berdasarkan perilaku penggunaan kartu kredit.
+
+### Main Steps
+
+- **Data Preparation**
+  - Load dataset nasabah kartu kredit dari Google Drive.
+  - Drop kolom ID (`CUST_ID`) dan handle missing values.
+  - Standarisasi semua fitur numerik menggunakan `StandardScaler` → `df_scaled`.
+
+- **Baseline Clustering (Machine Learning)**
+  - Menentukan jumlah cluster dengan **Elbow Method** dan **Silhouette Score**.
+  - Menerapkan **K-Means** pada `df_scaled`.
+  - Menghitung metrik:
+    - Silhouette Score  
+    - Davies–Bouldin Index  
+    - Calinski–Harabasz Score  
+
+- **Deep Learning – Autoencoder + K-Means**
+  - Membangun **autoencoder** simetris dengan latent dimension (mis. 8):
+    - Encoder: beberapa Dense layer → `latent_layer`.
+    - Decoder: merekonstruksi kembali fitur asli.
+  - Training:
+    - Loss: MSE
+    - Optimizer: Adam
+    - EarlyStopping pada `val_loss`.
+  - Ekstraksi representasi laten → `latent_df`.
+  - Jalankan **K-Means** di `latent_df` → AE + KMeans.
+  - Bandingkan Silhouette K-Means asli vs AE + KMeans.
+
+- **Cluster Profiling & Business Insight**
+  - Membuat ringkasan rata-rata fitur per cluster (`cluster_summary`, `cluster_summary_ae`).
+  - Interpretasi cluster, contoh:
+    - **Active Purchasers** (sering belanja, pembayaran cukup sehat)  
+    - **Cash-Advance Risky Users** (tarik tunai tinggi, jarang full payment)  
+    - **Heavy Cash-Advance but Good Payers**  
+    - **High Balance Mixed Users**  
+  - Menyimpulkan model mana yang lebih baik: pada dataset ini, **K-Means + scaling** memberikan separasi cluster terbaik.
 
 ---
 
-## Overall Learning Outcomes
+## 2️⃣ Fraud Detection – ML Baselines & ANN Classifier
 
-Across the three notebooks, this project covers:
+**File:** `E2E_Fraud_Detection_ML.ipynb`  
+**Task:** Memprediksi probabilitas sebuah transaksi online merupakan fraud (`isFraud`).
 
-- **Supervised Learning**
-  - Classification (fraud detection) with ML and Deep Learning.
-  - Regression (year prediction) with ML and Deep Learning.
-- **Unsupervised Learning**
-  - Customer segmentation with K-Means and Autoencoder-based clustering.
-- **End-to-End ML Engineering**
-  - Data loading from Google Drive.
-  - Preprocessing with `ColumnTransformer` and scalers/encoders.
-  - Model training, evaluation, and comparison.
-  - Result interpretation and business insights.
+### Main Steps
 
-These pipelines can serve as templates for future projects involving tabular datasets, fraud detection, customer analytics, and numeric regression tasks.
+- **Data Loading**
+  - Load `train_transaction.csv` (dan `test_transaction.csv`) dari Google Drive.
+  - Pisahkan:
+    - `X_train`, `y_train` (label `isFraud`).
+    - `X_test` untuk prediksi akhir / submission.
+
+- **Preprocessing (Scikit-Learn)**
+  - Pisah **numerical** dan **categorical** features.
+  - Gunakan `ColumnTransformer`:
+    - `StandardScaler` untuk numerik.
+    - `OneHotEncoder(handle_unknown="ignore")` untuk kategorikal.
+  - Split train–validation menggunakan `train_test_split` dengan `stratify=y`.
+
+- **Machine Learning Baselines**
+  - **Logistic Regression** (`class_weight="balanced"`).  
+  - **Random Forest Classifier** (meng-handle non-linearitas).  
+  - Evaluasi:
+    - ROC–AUC (utama)
+    - Precision, Recall, F1
+    - Confusion Matrix (fokus di kelas fraud).
+
+- **Deep Learning – ANN Classifier**
+  - Gunakan preprocessing yang sama → `X_train_dl`, `X_val_dl`, `X_test_dl`.
+  - Hitung **class weight** untuk mengatasi imbalance.
+  - Arsitektur ANN:
+    - Dense(128, ReLU) → Dropout(0.3)  
+    - Dense(64, ReLU) → Dropout(0.3)  
+    - Dense(1, Sigmoid)
+  - Compile:
+    - Loss: Binary Crossentropy
+    - Optimizer: Adam
+    - Metrics: AUC, Precision, Recall
+  - Training dengan **EarlyStopping** pada `val_auc`.
+
+- **Evaluation & Comparison**
+  - Bandingkan:
+    - AUC Logistic Regression
+    - AUC Random Forest
+    - AUC Deep Learning (ANN)
+  - Lihat trade-off:
+    - Recall fraud vs False Positive.
+  - Model terbaik dipilih berdasarkan kombinasi AUC + kebutuhan bisnis (lebih penting mengurangi **fraud miss** daripada false alarm).
+
+- **Submission (Optional)**
+  - Gunakan model terbaik untuk memprediksi `isFraud` di `test_transaction.csv`.
+  - Simpan sebagai `submission_fraud.csv` dengan format:
+    - `TransactionID`, `isFraud` (probabilitas).
+
+---
+
+## 3️⃣ Regression – Song Release Year Prediction (ML & DL)
+
+**File:** `E2E_Regression_Pipeline.ipynb`  
+**Task:** Memprediksi **tahun rilis** lagu berdasarkan fitur-fitur numerik audio.
+
+### Main Steps
+
+- **Data Loading**
+  - Download dataset dari Google Drive menggunakan `gdown`:
+    - `midterm-regresi-dataset.csv`.
+  - Dataset tidak memiliki header:
+    - Kolom pertama → target (year).  
+    - Kolom berikutnya → fitur (`feature_1`, `feature_2`, ...).
+
+- **Preprocessing**
+  - `y = df.iloc[:, 0]` (tahun rilis).  
+  - `X = df.iloc[:, 1:]` (fitur).  
+  - Train–validation split (mis. 80/20).
+  - `StandardScaler` untuk semua fitur numerik → `X_train_scaled`, `X_val_scaled`.
+
+- **Machine Learning Models**
+  - **Baseline:** model sederhana (mis. mean predictor) sebagai referensi awal.  
+  - **Linear Regression:** model regresi klasik.  
+  - (Opsional) **Random Forest Regressor / Tree-based** untuk pola non-linear.  
+  - Evaluasi dengan:
+    - MSE, RMSE
+    - MAE
+    - R² (coefficient of determination)
+
+- **Deep Learning – ANN Regressor**
+  - Arsitektur:
+    - Dense(128, ReLU) → Dropout(0.3)  
+    - Dense(64, ReLU) → Dropout(0.3)  
+    - Dense(1, Linear)
+  - Compile:
+    - Loss: MSE
+    - Optimizer: Adam
+    - Metrics: MAE, MSE
+  - Training:
+    - Input: `X_train_scaled`, `X_val_scaled`
+    - EarlyStopping pada `val_loss`.
+
+- **Evaluation & Comparison**
+  - Hitung MSE, RMSE, MAE, R² untuk:
+    - Linear Regression
+    - (opsional) Random Forest
+    - Deep Learning (ANN)
+  - Bandingkan performa:
+    - RMSE lebih rendah dan R² lebih tinggi → model lebih baik.
+  - Catat apakah deep learning memberikan peningkatan signifikan dibanding model ML klasik.
+
+---
+
+## 🚀 How to Run
+
+1. Buka **Google Colab**.  
+2. Upload notebook (`.ipynb`) dan jalankan cell dari atas ke bawah.  
+3. Pastikan:
+   - Dataset tersedia (via Google Drive atau `gdown`).  
+   - Path / `file_id` sudah disesuaikan dengan lokasi file kamu.  
+4. Perhatikan penggunaan RAM (sampling / float32) jika dataset besar.
+
+---
+
+<p align="center">
+  <i>Created with ❤️ by Josua Owen Fernandi Silaban for Machine Learning & Deep Learning coursework / UTS.</i>
+</p>
