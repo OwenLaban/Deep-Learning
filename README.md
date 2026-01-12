@@ -1,4 +1,4 @@
-# Machine Learning & Deep Learning UTS – Owen
+# Deep Learning – Owen
 
 ![Python](https://img.shields.io/badge/Python-3.10%2B-blue?style=for-the-badge&logo=python&logoColor=white)
 ![Jupyter Notebook](https://img.shields.io/badge/Tools-Google_Colab-orange?style=for-the-badge&logo=googlecolab&logoColor=white)
