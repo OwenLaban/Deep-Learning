@@ -1,0 +1,22 @@
+# Deep Learning Dependencies
+torch>=2.0.0
+torchvision>=0.15.0
+torchaudio>=2.0.0
+
+# Hugging Face Libraries
+transformers>=4.35.0
+datasets>=2.14.0
+evaluate>=0.4.0
+accelerate>=0.24.0
+
+# Data Processing
+numpy>=1.24.0
+pandas>=2.0.0
+
+# Utilities
+psutil>=5.9.0
+tqdm>=4.65.0
+
+# Optional: For better performance
+sentencepiece>=0.1.99
+protobuf>=3.20.0

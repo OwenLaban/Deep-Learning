@@ -1,0 +1,290 @@
+# =============================================================================
+# NLP Fine-Tuning Pipeline - Configuration File
+# =============================================================================
+# This file contains all model and training configurations for the pipeline.
+# Modify these values to customize your experiments.
+
+# =============================================================================
+# MODELS CONFIGURATION
+# =============================================================================
+models:
+  bert_base:
+    name: "bert-base-uncased"
+    hidden_size: 768
+    num_layers: 12
+    num_attention_heads: 12
+    parameters: "110M"
+    description: "Full BERT base model - best accuracy"
+    
+  distilbert:
+    name: "distilbert-base-uncased"
+    hidden_size: 768
+    num_layers: 6
+    num_attention_heads: 12
+    parameters: "66M"
+    description: "Distilled BERT - 40% smaller, 60% faster"
+    
+  tinybert:
+    name: "huawei-noah/TinyBERT_General_4L_312D"
+    hidden_size: 312
+    num_layers: 4
+    num_attention_heads: 12
+    parameters: "14M"
+    description: "TinyBERT - optimized for edge deployment"
+
+# =============================================================================
+# DATASET CONFIGURATIONS
+# =============================================================================
+datasets:
+  ag_news:
+    name: "sh0416/ag_news"
+    task_type: "single_label_classification"
+    num_labels: 4
+    label_names:
+      - "World"
+      - "Sports"
+      - "Business"
+      - "Sci/Tech"
+    text_column: "text"
+    label_column: "label"
+    max_length: 128
+    description: "News article topic classification"
+    
+  go_emotions:
+    name: "google-research-datasets/go_emotions"
+    config: "simplified"
+    task_type: "multi_label_classification"
+    num_labels: 28
+    label_names:
+      - "admiration"
+      - "amusement"
+      - "anger"
+      - "annoyance"
+      - "approval"
+      - "caring"
+      - "confusion"
+      - "curiosity"
+      - "desire"
+      - "disappointment"
+      - "disapproval"
+      - "disgust"
+      - "embarrassment"
+      - "excitement"
+      - "fear"
+      - "gratitude"
+      - "grief"
+      - "joy"
+      - "love"
+      - "nervousness"
+      - "optimism"
+      - "pride"
+      - "realization"
+      - "relief"
+      - "remorse"
+      - "sadness"
+      - "surprise"
+      - "neutral"
+    text_column: "text"
+    label_column: "labels"
+    max_length: 64
+    description: "Reddit comment emotion classification"
+    
+  mnli:
+    name: "glue"
+    config: "mnli"
+    task_type: "natural_language_inference"
+    num_labels: 3
+    label_names:
+      - "entailment"
+      - "neutral"
+      - "contradiction"
+    premise_column: "premise"
+    hypothesis_column: "hypothesis"
+    label_column: "label"
+    max_length: 256  # Combined length for premise + hypothesis
+    description: "Textual entailment classification"
+
+# =============================================================================
+# TRAINING CONFIGURATIONS
+# =============================================================================
+training:
+  # Default settings (optimized for Colab free tier ~12GB GPU RAM)
+  default:
+    batch_size: 16
+    gradient_accumulation_steps: 2  # Effective batch size: 32
+    learning_rate: 2.0e-5
+    num_epochs: 3
+    warmup_ratio: 0.1
+    weight_decay: 0.01
+    fp16: true
+    max_grad_norm: 1.0
+    
+  # Early stopping configuration
+  early_stopping:
+    enabled: true
+    patience: 3
+    metric: "eval_loss"
+    mode: "min"  # "min" for loss, "max" for accuracy/f1
+    
+  # Optimizer settings
+  optimizer:
+    type: "adamw"
+    betas: [0.9, 0.999]
+    epsilon: 1.0e-8
+    
+  # Scheduler settings
+  scheduler:
+    type: "linear"
+    warmup_ratio: 0.1
+    
+  # Logging and saving
+  logging:
+    logging_steps: 100
+    eval_steps: 500
+    save_steps: 500
+    save_total_limit: 2
+    load_best_model_at_end: true
+    metric_for_best_model: "eval_loss"
+
+# =============================================================================
+# TASK-SPECIFIC TRAINING OVERRIDES
+# =============================================================================
+task_configs:
+  ag_news:
+    # Standard single-label classification
+    loss_function: "cross_entropy"
+    metrics:
+      - "accuracy"
+      - "f1_weighted"
+      - "precision_weighted"
+      - "recall_weighted"
+    
+  go_emotions:
+    # Multi-label classification with class weighting
+    loss_function: "bce_with_logits"
+    use_class_weights: true
+    threshold: 0.5  # Default threshold for multi-label
+    metrics:
+      - "f1_micro"
+      - "f1_macro"
+      - "f1_weighted"
+      - "hamming_loss"
+      - "subset_accuracy"
+    
+  mnli:
+    # Natural Language Inference
+    loss_function: "cross_entropy"
+    metrics:
+      - "accuracy"
+      - "f1_weighted"
+    evaluation_sets:
+      - "validation_matched"
+      - "validation_mismatched"
+
+# =============================================================================
+# ENVIRONMENT-SPECIFIC CONFIGURATIONS
+# =============================================================================
+environments:
+  colab_free:
+    description: "Google Colab free tier (~12GB GPU RAM)"
+    batch_size: 16
+    gradient_accumulation_steps: 2
+    fp16: true
+    max_length_reduction: 0.0  # No reduction needed
+    
+  colab_pro:
+    description: "Google Colab Pro (~24GB GPU RAM)"
+    batch_size: 32
+    gradient_accumulation_steps: 1
+    fp16: true
+    max_length_reduction: 0.0
+    
+  local_gpu:
+    description: "Local GPU with 8-16GB RAM"
+    batch_size: 16
+    gradient_accumulation_steps: 2
+    fp16: true
+    max_length_reduction: 0.0
+    
+  cpu_only:
+    description: "CPU-only environment (slow)"
+    batch_size: 4
+    gradient_accumulation_steps: 8
+    fp16: false
+    max_length_reduction: 0.25  # Reduce max_length by 25%
+
+# =============================================================================
+# EVALUATION CONFIGURATIONS
+# =============================================================================
+evaluation:
+  # Metrics to compute
+  metrics:
+    classification:
+      - "accuracy"
+      - "precision"
+      - "recall"
+      - "f1"
+    multi_label:
+      - "hamming_loss"
+      - "subset_accuracy"
+      - "micro_f1"
+      - "macro_f1"
+      
+  # Visualization settings
+  visualization:
+    confusion_matrix: true
+    roc_curves: true
+    precision_recall_curves: true
+    per_class_metrics: true
+    
+  # Inference benchmarking
+  benchmark:
+    num_samples: 1000
+    batch_sizes: [1, 8, 16, 32]
+    warmup_runs: 3
+    measure_memory: true
+
+# =============================================================================
+# OUTPUT PATHS
+# =============================================================================
+paths:
+  models_dir: "models"
+  data_dir: "data"
+  results_dir: "results"
+  logs_dir: "logs"
+  
+  # Model save patterns
+  model_save_pattern: "{dataset}_{model}_{timestamp}"
+  results_save_pattern: "{dataset}_{model}_results.json"
+
+# =============================================================================
+# REPRODUCIBILITY
+# =============================================================================
+reproducibility:
+  seed: 42
+  deterministic: true
+  # Note: Full determinism may slow down training on GPU
+
+# =============================================================================
+# ADVANCED SETTINGS
+# =============================================================================
+advanced:
+  # Mixed precision training
+  mixed_precision:
+    enabled: true
+    dtype: "float16"  # or "bfloat16" for newer GPUs
+    
+  # Gradient checkpointing (for memory-constrained environments)
+  gradient_checkpointing:
+    enabled: false  # Enable if running out of memory
+    
+  # Data loading
+  dataloader:
+    num_workers: 2
+    pin_memory: true
+    prefetch_factor: 2
+    
+  # Model parallelism (for very large models)
+  model_parallel:
+    enabled: false
+    devices: ["cuda:0"]
